@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import NewsItem from './NewsItem'
 import Loading from './Loading'
+import PropTypes from 'prop-types'
+
 export default class News extends Component {
   article = [
     {
@@ -135,8 +137,26 @@ export default class News extends Component {
     }
   ]
 
-  constructor() {
-    super()
+  static defaultProps = {
+    country: 'in',
+    pageSize: 9,
+    category: 'general'
+  }
+
+  static propTypes = {
+    country: PropTypes.string,
+    pageSize: PropTypes.number,
+    category: PropTypes.string
+
+  }
+
+  convertCapitalize = (str)=>{
+    return str[0].toUpperCase() + str.slice(1)
+
+  };
+
+  constructor(props) {
+    super(props)
     this.state = {
       article: this.article,
       loading: false,
@@ -144,11 +164,12 @@ export default class News extends Component {
 
 
     }
-  }
+    document.title = `${this.convertCapitalize(this.props.category)}-ReactNews`
+  };
 
-  async componentDidMount() {
+  async updateNews() {
     this.setState({ loading: true })
-    let url = `https://newsapi.org/v2/top-headlines?country=in&category=business&apiKey=9f649790719942eebe4447a88aab8f82&page=1&pageSize=${this.props.pageSize}`
+    let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page}&pageSize=${this.props.pageSize}`
     let data = await fetch(url)
     let parseddata = await data.json()
     this.setState({
@@ -156,52 +177,83 @@ export default class News extends Component {
       totalResults: parseddata.totalResults,
       loading: false
     });
-    // console.log(this.totalResults,parseddata.totalResults)
-    // console.log(this.article)
-    // console.log(parseddata.articles)
+  };
 
-  }
+  async componentDidMount() {
+    //   this.setState({ loading: true })
+    //   let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=1&pageSize=${this.props.pageSize}`
+    //   let data = await fetch(url)
+    //   let parseddata = await data.json()
+    //   this.setState({
+    //     article: parseddata.articles,
+    //     totalResults: parseddata.totalResults,
+    //     loading: false
+    //   });
+    //   // console.log(this.totalResults,parseddata.totalResults)
+    //   // console.log(this.article)
+    //   // console.log(parseddata.articles)
+    this.updateNews()
+
+  };
+
 
   nextPage = async () => {
-    if (this.state.page + 1 > Math.ceil(this.state.totalResults / 20)) {
-      // do nothing as number of pages is exceeding the total results
-    }
-    else {
-      this.setState({ loading: true })
-      let url = `https://newsapi.org/v2/top-headlines?country=in&category=business&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`
-      let data = await fetch(url)
-      let parseddata = await data.json()
-      this.setState({
-        page: this.state.page + 1,
-        article: parseddata.articles,
-        loading: false
-      });
-    }
+    // if (this.state.page + 1 > Math.ceil(this.state.totalResults / 20)) {
+    //   // do nothing as number of pages is exceeding the total results
+    // }
+    // else {
+    //   this.setState({ loading: true })
+    //   let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`
+    //   let data = await fetch(url)
+    //   let parseddata = await data.json()
+    //   this.setState({
+    //     page: this.state.page + 1,
+    //     article: parseddata.articles,
+    //     loading: false
+    //   });
+    // }
+    this.setState({
+      page: this.state.page + 1
+    })
+    this.updateNews()
   };
 
   prevPage = async () => {
-    this.setState({loading:true})
-    let url = `https://newsapi.org/v2/top-headlines?country=in&category=business&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page11}&pageSize=${this.props.pageSize}`
-    let data = await fetch(url)
-    let parseddata = await data.json()
+    // this.setState({ loading: true })
+    // let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page11}&pageSize=${this.props.pageSize}`
+    // let data = await fetch(url)
+    // let parseddata = await data.json()
+    // this.setState({
+    //   page: this.state.page - 1,
+    //   article: parseddata.articles,
+    //   loading: false
+    // });
     this.setState({
-      page: this.state.page - 1,
-      article: parseddata.articles,
-      loading: false
-    });
+      page: this.state.page - 1
+    })
+    this.updateNews()
+
   };
 
   render() {
 
     return (
       <div className='container'>
-        <h1 className=' my-10 text-center'>React News</h1>
+
+
+        <h1 className=' my-10 text-center' style={{ margin: '35px' }}>ReactNews-Top {this.convertCapitalize(this.props.category)} Headlines</h1>
         {this.state.loading && <Loading />}
         <div className='row'>
           {!this.state.loading && this.state.article.map((element) => {
 
             return <div className="col-md-4 items " key={element.url}>
-              <NewsItem title={element.title ? element.title.slice(0, 70) : ''} description={element.description ? element.description.slice(0, 100) : ''} imageUrl={element.urlToImage} url={element.url} />
+              <NewsItem title={element.title ? element.title.slice(0, 70) : ''}
+                description={element.description ? element.description.slice(0, 100) : ''}
+                imageUrl={element.urlToImage}
+                url={element.url}
+                author={element.source.name ? element.source.name : 'Unknown'}
+                publishedAt={element.publishedAt}
+              />
             </div>
 
 
@@ -210,7 +262,7 @@ export default class News extends Component {
         </div>
         <div className="container d-flex justify-content-between">
           <button disabled={this.state.page <= 1} type="button" className="btn btn-dark" onClick={this.prevPage}>&laquo; Previous</button>
-          <button disabled = {this.state.page + 1 > Math.ceil(this.state.totalResults / 20)} type="button" className="btn btn-dark" onClick={this.nextPage}>Next &raquo;</button>
+          <button disabled={this.state.page + 1 > Math.ceil(this.state.totalResults / 20)} type="button" className="btn btn-dark" onClick={this.nextPage}>Next &raquo;</button>
         </div>
 
       </div>
