@@ -2,6 +2,8 @@ import React, { Component } from 'react'
 import NewsItem from './NewsItem'
 import Loading from './Loading'
 import PropTypes from 'prop-types'
+import InfiniteScroll from "react-infinite-scroll-component";
+
 
 export default class News extends Component {
   article = [
@@ -150,7 +152,7 @@ export default class News extends Component {
 
   }
 
-  convertCapitalize = (str)=>{
+  convertCapitalize = (str) => {
     return str[0].toUpperCase() + str.slice(1)
 
   };
@@ -161,6 +163,7 @@ export default class News extends Component {
       article: this.article,
       loading: false,
       page: 1,
+      totalResults: 0
 
 
     }
@@ -168,20 +171,25 @@ export default class News extends Component {
   };
 
   async updateNews() {
+    this.props.setProgress(0)
     this.setState({ loading: true })
-    let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=${this.props.newsApi}&page=${this.state.page}&pageSize=${this.props.pageSize}`
+    let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page}&pageSize=${this.props.pageSize}`
     let data = await fetch(url)
+    this.props.setProgress(20)
     let parseddata = await data.json()
+    this.props.setProgress(80)
     this.setState({
       article: parseddata.articles,
       totalResults: parseddata.totalResults,
       loading: false
+
     });
+    this.props.setProgress(100)
   };
 
   async componentDidMount() {
     //   this.setState({ loading: true })
-    //   let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=${this.props.newsApi}&page=1&pageSize=${this.props.pageSize}`
+    //   let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=1&pageSize=${this.props.pageSize}`
     //   let data = await fetch(url)
     //   let parseddata = await data.json()
     //   this.setState({
@@ -203,7 +211,7 @@ export default class News extends Component {
     // }
     // else {
     //   this.setState({ loading: true })
-    //   let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=${this.props.newsApi}&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`
+    //   let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page + 1}&pageSize=${this.props.pageSize}`
     //   let data = await fetch(url)
     //   let parseddata = await data.json()
     //   this.setState({
@@ -220,7 +228,7 @@ export default class News extends Component {
 
   prevPage = async () => {
     // this.setState({ loading: true })
-    // let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=${this.props.newsApi}&page=${this.state.page11}&pageSize=${this.props.pageSize}`
+    // let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page11}&pageSize=${this.props.pageSize}`
     // let data = await fetch(url)
     // let parseddata = await data.json()
     // this.setState({
@@ -235,37 +243,62 @@ export default class News extends Component {
 
   };
 
+  fetchMoreData = async() => {
+    
+    this.setState({
+      page: this.state.page + 1
+    })
+    this.setState({ loading: true })
+    let url = `https://newsapi.org/v2/top-headlines?country=in&category=${this.props.category}&apiKey=9f649790719942eebe4447a88aab8f82&page=${this.state.page}&pageSize=${this.props.pageSize}`
+    let data = await fetch(url)
+    let parseddata = await data.json()
+    this.setState({
+      article: this.state.article.concat(parseddata.articles),
+      totalResults: parseddata.totalResults,
+      loading: false
+    });
+  };
+
   render() {
 
     return (
-      <div className='container'>
+      <>
 
 
         <h1 className=' my-10 text-center' style={{ margin: '35px' }}>ReactNews-Top {this.convertCapitalize(this.props.category)} Headlines</h1>
         {this.state.loading && <Loading />}
-        <div className='row'>
-          {!this.state.loading && this.state.article.map((element) => {
 
-            return <div className="col-md-4 items " key={element.url}>
-              <NewsItem title={element.title ? element.title.slice(0, 70) : ''}
-                description={element.description ? element.description.slice(0, 100) : ''}
-                imageUrl={element.urlToImage}
-                url={element.url}
-                author={element.source.name ? element.source.name : 'Unknown'}
-                publishedAt={element.publishedAt}
-              />
+        <InfiniteScroll
+          dataLength={this.state.article.length}
+          next={this.fetchMoreData}
+          hasMore={this.state.article.length!==this.state.totalResults}
+          loader={this.state.loading&&<Loading />}>                    
+          <div className="container">
+          <div className='row'>
+            {this.state.article.map((element) => {
+
+              return <div className="col-md-4 items " key={element.url}>
+                <NewsItem title={element.title ? element.title.slice(0, 70) : ''}
+                  description={element.description ? element.description.slice(0, 100) : ''}
+                  imageUrl={element.urlToImage}
+                  url={element.url}
+                  author={element.source.name ? element.source.name : 'Unknown'}
+                  publishedAt={element.publishedAt}
+                />
+              </div>
+
+              
+            })}
             </div>
+            </div>
+        </InfiniteScroll>
 
-
-          })}
-
-        </div>
-        <div className="container d-flex justify-content-between">
+        {/* <div className="container d-flex justify-content-between">
           <button disabled={this.state.page <= 1} type="button" className="btn btn-dark" onClick={this.prevPage}>&laquo; Previous</button>
           <button disabled={this.state.page + 1 > Math.ceil(this.state.totalResults / 20)} type="button" className="btn btn-dark" onClick={this.nextPage}>Next &raquo;</button>
-        </div>
+        </div> */}
 
-      </div>
+      </>
     )
   }
 }

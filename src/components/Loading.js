@@ -6,7 +6,7 @@ export default class Loading extends Component {
   render() {
     return (
       <div className='text-center'>
-        <img src={XOsX} className='img-fluid max-width: 30%' alt="loading" />
+        <img src={XOsX} className='max-width: 8% loadingimg' alt="loading" style={{marginBottom:'3px',maxWidth:'8%',height:'auto'}}/>
       </div>
     )
   }
